@@ -1,0 +1,74 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>DOIsqus</title>
+
+<!-- styles -->
+<style>
+	a { text-decoration: none; }
+	#citation { margin: 20px 10px; }
+</style>
+
+<!-- elements -->
+<form id="doi-form">
+	<label>DOI: <input type="text" id="doi" placeholder="10."></label>
+	<button type="submit">Discuss</button>
+</form>
+
+<article>
+	<header>
+		<h1><a id="title" target="_new"></a></h1>
+	</header>
+
+	<div id="citation"></div>
+</article>
+
+<div id="disqus_thread"></div>
+
+<script>
+	var disqus_shortname = "doisqus";
+
+	var titleNode = document.getElementById("title");
+	var citationNode = document.getElementById("citation");
+	var doiNode = document.getElementById("doi");
+	var formNode = document.getElementById("doi-form");
+
+	var refresh = function() {
+		titleNode.textContent = "";
+		citationNode.textContent = "";
+
+		var matches = window.location.hash.match(/^#(10\..+)/);
+
+		if (matches) {
+			var doi = matches[1];
+
+			var disqus_url = "http://dx.doi.org/" + doi;
+
+			doiNode.value = doi;
+			titleNode.setAttribute("href", disqus_url);
+
+			var xhr = new XMLHttpRequest();
+			xhr.open("GET", "http://search.labs.crossref.org/dois?q=" + encodeURIComponent(doi));
+			xhr.onload = function() {
+				var items = JSON.parse(this.responseText);
+				if (items.length) {
+					var item = items[0];
+
+					titleNode.innerHTML = item.title;
+					document.title = item.title;
+
+					citationNode.innerHTML = item.fullCitation;
+				}
+			};
+			xhr.send();
+		} else {
+			formNode.addEventListener("submit", function(event) {
+				event.preventDefault();
+				window.location.hash = doiNode.value;
+			}, false);
+		}
+	}
+
+	refresh();
+	window.addEventListener("hashchange", refresh, false);
+</script>
+<script src="//doisqus.disqus.com/embed.js" async></script>
